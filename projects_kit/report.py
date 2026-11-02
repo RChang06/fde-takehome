@@ -64,7 +64,8 @@ def diff(old, new, now_ms):
     old_by_id = {key(p, "title"): p for p in old}
     new_by_id = {key(p, "title"): p for p in new}
 
-    attention = ["the Projects API restarted since then (ids changed), so this compares by name"] if reset else []
+    attention = ["the Projects API restarted since then: its data was reset to the seed and due dates regenerated, "
+                 "so this compares by name and skips due dates"] if reset else []
     progress = []
     for pid, p in new_by_id.items():
         t = p["title"]
@@ -87,11 +88,13 @@ def diff(old, new, now_ms):
         removed = [i["task"] for k, i in old_items.items() if k not in new_items]
         if removed:
             attention.append(f"{t}: {len(removed)} removed, not done ({', '.join(removed)})")
+        reopened = [i["task"] for k, i in new_items.items() if not i["done"] and k in old_items and old_items[k]["done"]]
+        if reopened:
+            attention.append(f"{t}: {len(reopened)} reopened ({', '.join(reopened)})")
         for k, i in new_items.items():
-            if k not in old_items:
-                continue
+            if k not in old_items or reset:
+                continue  # after a restart the api regenerates every due date, so they can't be compared
             was, now_ = client.due_ms(old_items[k]["by"]), client.due_ms(i["by"])
-            # a push counts only if the due day changes (a restart shifts seed dates by minutes)
             if was and now_ and now_ > was and client.fmt_due(now_) != client.fmt_due(was) and not i["done"]:
                 attention.append(f'{t}: "{i["task"]}" due pushed {client.fmt_due(was)} → {client.fmt_due(now_)}')
             if client.is_late(i, now_ms) and not client.is_late(old_items[k], o.get("_seen", now_ms)):
