@@ -16,3 +16,7 @@ uv run uvicorn projects_kit.webhook:app --port 8000
 Errors share one shape: the failing step, why, and one next action.
 
 Skipped on purpose: a Zapier app, delete tools, LLM written reports.
+
+# AI Usage
+
+I used Claude Opus 5.5 to help with the design and DeepSeek V4 Flash for implementation.
